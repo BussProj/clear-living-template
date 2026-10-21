@@ -61,7 +61,10 @@ function App(){
   window.scrollTo({top:0,behavior:"auto"});
   setMenu(false);
 
-  if(window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  // Only run Lenis smooth scroll on desktop with pointer precision
+  const isDesktop = window.matchMedia("(min-width: 1025px) and (pointer: fine)").matches;
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (!isDesktop || reducedMotion) return;
 
   const lenis = new Lenis({
    duration: 1.15,
@@ -99,20 +102,28 @@ function App(){
    lenis.destroy();
   };
  },[key,c]);
+
  useGSAP(()=>{
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reducedMotion) return;
 
-  gsap.utils.toArray<HTMLElement>(".reveal:not(.service-card):not(.process-step):not(.standard-node)").forEach((el)=>{
-   gsap.fromTo(el,{y:18,autoAlpha:0},{y:0,autoAlpha:1,duration:.65,ease:"power2.out",scrollTrigger:{trigger:el,start:"top 92%",once:true}});
-  });
+  const mm = gsap.matchMedia();
 
-  // Subtle Image Parallax on Photography
-  if (!reducedMotion) {
+  // ========================================================
+  // DESKTOP VIEW ONLY (min-width: 1025px): Full GSAP Experience
+  // ========================================================
+  mm.add("(min-width: 1025px)", () => {
+   // 1. Reveal animations
+   gsap.utils.toArray<HTMLElement>(".reveal:not(.service-card):not(.process-step):not(.standard-node)").forEach((el)=>{
+    gsap.fromTo(el,{y:18,autoAlpha:0},{y:0,autoAlpha:1,duration:.65,ease:"power2.out",scrollTrigger:{trigger:el,start:"top 92%",once:true}});
+   });
+
+   // 2. Subtle Image Parallax on Photography
    const parallaxItems = [
-    { sel: ".hero-visual > img", trigger: ".hero" },
-    { sel: ".about-visual > img", trigger: "#about" },
-    { sel: ".matter-image > img", trigger: ".matter" },
-    { sel: ".why-side-image > img", trigger: "#why" }
+    { sel: ".hero-visual img", trigger: ".hero" },
+    { sel: ".about-visual img", trigger: "#about" },
+    { sel: ".matter-image img", trigger: ".matter" },
+    { sel: ".why-side-image img", trigger: "#why" }
    ];
    parallaxItems.forEach(({ sel, trigger }) => {
     const img = document.querySelector<HTMLElement>(sel);
@@ -131,115 +142,131 @@ function App(){
      });
     }
    });
-  }
 
-  // Standards Orbit: Dashed ring rotation, satellite entrance and idle floating
-  const standardsOrbit = document.querySelector<HTMLElement>(".standards-orbit");
-  if (standardsOrbit && !reducedMotion) {
-   gsap.to(".orbit-line", {
-    rotation: 360,
-    transformOrigin: "50% 50%",
-    duration: 55,
-    ease: "none",
-    repeat: -1
-   });
-
-   const nodes = gsap.utils.toArray<HTMLElement>(".standard-node", standardsOrbit);
-   gsap.fromTo(nodes,
-    { scale: 0.82, autoAlpha: 0 },
-    {
-     scale: 1,
-     autoAlpha: 1,
-     duration: 0.8,
-     stagger: 0.16,
-     ease: "back.out(1.4)",
-     scrollTrigger: {
-      trigger: standardsOrbit,
-      start: "top 82%",
-      once: true
-     }
-    }
-   );
-
-   nodes.forEach((node, idx) => {
-    gsap.to(node, {
-     y: "-=6",
-     duration: 2.2 + idx * 0.4,
-     repeat: -1,
-     yoyo: true,
-     ease: "sine.inOut",
-     delay: idx * 0.25
+   // 3. Standards Orbit: Rotating ring, satellite entrance & float
+   const standardsOrbit = document.querySelector<HTMLElement>(".standards-orbit");
+   if (standardsOrbit) {
+    gsap.to(".orbit-line", {
+     rotation: 360,
+     transformOrigin: "50% 50%",
+     duration: 55,
+     ease: "none",
+     repeat: -1
     });
-   });
-  }
 
-  // Magnetic Cursor Pull on Primary Buttons (Pointer Devices only)
-  if (window.matchMedia("(pointer: fine)").matches && !reducedMotion) {
-   const magnetics = document.querySelectorAll<HTMLElement>(".button.primary, .nav-cta, .why-cta .light");
-   magnetics.forEach((btn) => {
-    const onMove = (e: MouseEvent) => {
-     const rect = btn.getBoundingClientRect();
-     const x = (e.clientX - (rect.left + rect.width / 2)) * 0.32;
-     const y = (e.clientY - (rect.top + rect.height / 2)) * 0.32;
-     gsap.to(btn, { x, y, duration: 0.25, ease: "power2.out" });
-    };
-    const onLeave = () => {
-     gsap.to(btn, { x: 0, y: 0, duration: 0.6, ease: "elastic.out(1.1, 0.45)" });
-    };
-    btn.addEventListener("mousemove", onMove);
-    btn.addEventListener("mouseleave", onLeave);
+    const nodes = gsap.utils.toArray<HTMLElement>(".standard-node", standardsOrbit);
+    gsap.fromTo(nodes,
+     { scale: 0.82, autoAlpha: 0 },
+     {
+      scale: 1,
+      autoAlpha: 1,
+      duration: 0.8,
+      stagger: 0.16,
+      ease: "back.out(1.4)",
+      scrollTrigger: {
+       trigger: standardsOrbit,
+       start: "top 82%",
+       once: true
+      }
+     }
+    );
+
+    nodes.forEach((node, idx) => {
+     gsap.to(node, {
+      y: "-=6",
+      duration: 2.2 + idx * 0.4,
+      repeat: -1,
+      yoyo: true,
+      ease: "sine.inOut",
+      delay: idx * 0.25
+     });
+    });
+   }
+
+   // 4. Magnetic Cursor Pull on Primary Buttons
+   if (window.matchMedia("(pointer: fine)").matches) {
+    const magnetics = document.querySelectorAll<HTMLElement>(".button.primary, .nav-cta, .why-cta .light");
+    magnetics.forEach((btn) => {
+     const onMove = (e: MouseEvent) => {
+      const rect = btn.getBoundingClientRect();
+      const x = (e.clientX - (rect.left + rect.width / 2)) * 0.32;
+      const y = (e.clientY - (rect.top + rect.height / 2)) * 0.32;
+      gsap.to(btn, { x, y, duration: 0.25, ease: "power2.out" });
+     };
+     const onLeave = () => {
+      gsap.to(btn, { x: 0, y: 0, duration: 0.6, ease: "elastic.out(1.1, 0.45)" });
+     };
+     btn.addEventListener("mousemove", onMove);
+     btn.addEventListener("mouseleave", onLeave);
+    });
+   }
+
+   // 5. Services: Pinned Vertical Stages (Desktop only)
+   const servicesLayout = document.querySelector<HTMLElement>("#services .services-feature-layout");
+   const serviceWindow = servicesLayout?.querySelector<HTMLElement>(".service-stage-window");
+   const serviceCards = servicesLayout ? gsap.utils.toArray<HTMLElement>(".service-card", servicesLayout) : [];
+   if (servicesLayout && serviceWindow && serviceCards.length >= 2) {
+    gsap.set(serviceCards, { yPercent: 112, autoAlpha: 0 });
+    gsap.set(serviceCards[0], { yPercent: 0, autoAlpha: 1 });
+    const serviceTl = gsap.timeline({
+     scrollTrigger: {
+      trigger: servicesLayout,
+      start: "top 108px",
+      end: () => "+=" + Math.round(window.innerHeight * (serviceCards.length - 1) * 1.08),
+      scrub: 0.62,
+      pin: true,
+      anticipatePin: 1,
+      invalidateOnRefresh: true
+     }
+    });
+    serviceCards.forEach((card, index) => {
+     if (index === 0) return;
+     serviceTl.to(serviceCards[index - 1], { yPercent: -112, autoAlpha: 0, duration: 1, ease: "none" }, index - 1)
+       .fromTo(card, { yPercent: 112, autoAlpha: 0 }, { yPercent: 0, autoAlpha: 1, duration: 1, ease: "none" }, index - 1);
+    });
+   }
+
+   // 6. How it works: Pinned Horizontal Stages (Desktop only)
+   const processStory = document.querySelector<HTMLElement>("#process .process-story");
+   const processGrid = processStory?.querySelector<HTMLElement>(".process-grid");
+   const processCards = processStory ? gsap.utils.toArray<HTMLElement>(".process-step", processStory) : [];
+   if (processStory && processGrid && processCards.length >= 2) {
+    gsap.set(processCards, { xPercent: 112, autoAlpha: 0 });
+    gsap.set(processCards[0], { xPercent: 0, autoAlpha: 1 });
+    const processTl = gsap.timeline({
+     scrollTrigger: {
+      trigger: processStory,
+      start: "top 108px",
+      end: () => "+=" + Math.round(window.innerHeight * (processCards.length - 1) * 1.08),
+      scrub: 0.62,
+      pin: true,
+      anticipatePin: 1,
+      invalidateOnRefresh: true
+     }
+    });
+    processCards.forEach((card, index) => {
+     if (index === 0) return;
+     processTl.to(processCards[index - 1], { xPercent: -112, autoAlpha: 0, duration: 1, ease: "none" }, index - 1)
+       .fromTo(card, { xPercent: 112, autoAlpha: 0 }, { xPercent: 0, autoAlpha: 1, duration: 1, ease: "none" }, index - 1);
+    });
+   }
+  });
+
+  // ========================================================
+  // MOBILE / TABLET VIEW (max-width: 1024px): 100% Static & Clean
+  // ========================================================
+  mm.add("(max-width: 1024px)", () => {
+   // Clear all inline transforms and styles left on cards and visual elements
+   const elementsToClear = document.querySelectorAll<HTMLElement>(
+    "#services .service-card, #process .process-step, .standards-orbit *, .hero-visual img, .about-visual img, .matter-image img, .why-side-image img, .reveal"
+   );
+   elementsToClear.forEach((el) => {
+    gsap.set(el, { clearProps: "all" });
    });
-  }
-  // Services: pin the layout on desktop and move each complete service vertically (bottom-to-top).
-  const servicesLayout = document.querySelector<HTMLElement>("#services .services-feature-layout");
-  const serviceWindow = servicesLayout?.querySelector<HTMLElement>(".service-stage-window");
-  const serviceCards = servicesLayout ? gsap.utils.toArray<HTMLElement>(".service-card", servicesLayout) : [];
-  const desktopServices = window.matchMedia("(min-width: 1025px)").matches;
-  if (servicesLayout && serviceWindow && serviceCards.length >= 2 && desktopServices && !reducedMotion) {
-   gsap.set(serviceCards, { yPercent: 112, autoAlpha: 0 });
-   gsap.set(serviceCards[0], { yPercent: 0, autoAlpha: 1 });
-   const serviceTl = gsap.timeline({
-    scrollTrigger: {
-     trigger: servicesLayout,
-     start: "top 108px",
-     end: () => "+=" + Math.round(window.innerHeight * (serviceCards.length - 1) * 1.08),
-     scrub: 0.62,
-     pin: true,
-     anticipatePin: 1,
-     invalidateOnRefresh: true
-    }
-   });
-   serviceCards.forEach((card, index) => {
-    if (index === 0) return;
-    serviceTl.to(serviceCards[index - 1], { yPercent: -112, autoAlpha: 0, duration: 1, ease: "none" }, index - 1)
-      .fromTo(card, { yPercent: 112, autoAlpha: 0 }, { yPercent: 0, autoAlpha: 1, duration: 1, ease: "none" }, index - 1);
-   });
-  }
-  // How it works: pin the story on desktop and move each complete stage right-to-left.
-  const processStory=document.querySelector<HTMLElement>("#process .process-story");
-  const processGrid=processStory?.querySelector<HTMLElement>(".process-grid");
-  const processCards=processStory?gsap.utils.toArray<HTMLElement>(".process-step",processStory):[];
-  const desktopStory=window.matchMedia("(min-width: 1025px)").matches;
-  if(processStory&&processGrid&&processCards.length>=2&&desktopStory&&!reducedMotion){
-   gsap.set(processCards,{xPercent:112,autoAlpha:0});
-   gsap.set(processCards[0],{xPercent:0,autoAlpha:1});
-   const processTl=gsap.timeline({scrollTrigger:{trigger:processStory,start:"top 108px",end:()=>"+="+Math.round(window.innerHeight*(processCards.length-1)*1.08),scrub:0.62,pin:true,anticipatePin:1,invalidateOnRefresh:true}});
-   processCards.forEach((card,index)=>{
-    if(index===0)return;
-    processTl.to(processCards[index-1],{xPercent:-112,autoAlpha:0,duration:1,ease:"none"},index-1)
-      .fromTo(card,{xPercent:112,autoAlpha:0},{xPercent:0,autoAlpha:1,duration:1,ease:"none"},index-1);
-   });
-  }
-  const comparison=document.querySelector<HTMLElement>(".comparison-section");
-  const photo=document.querySelector<HTMLElement>(".comparison-before");
-  const handle=document.querySelector<HTMLElement>(".comparison-handle");
-  if(comparison&&photo&&handle&&window.matchMedia("(min-width: 901px)").matches&&!window.matchMedia("(prefers-reduced-motion: reduce)").matches){
-   gsap.set(photo,{clipPath:"inset(0 0 0 0)"});
-   gsap.set(handle,{left:"0%"});
-   gsap.to(photo,{clipPath:"inset(0 0 0 100%)",ease:"none",scrollTrigger:{trigger:comparison,start:"top top",end:()=>"+="+Math.round(window.innerHeight*1.15),scrub:0.35,pin:true,anticipatePin:1,invalidateOnRefresh:true}});
-   gsap.to(handle,{left:"100%",ease:"none",scrollTrigger:{trigger:comparison,start:"top top",end:()=>"+="+Math.round(window.innerHeight*1.15),scrub:0.35,invalidateOnRefresh:true}});
-  } else if(photo&&handle){gsap.set(photo,{clipPath:"inset(0 0 0 100%)"});gsap.set(handle,{display:"none"});}
- },{dependencies:[key],revertOnUpdate:true});
+  });
+
+  return () => mm.revert();
+ },[key,c]);
  return <div className={"site theme-"+c.theme}>
   <header className="header"><a className="brand" href="#home" aria-label="Airduct home"><span className="brand-mark"><AirductMark/></span><span className="brand-name">AIRDUCT<small>VENTILATION CARE</small></span></a><nav className={menu?"nav open":"nav"}>{nav.map(([label,id])=><a key={id} href={"#"+id} onClick={()=>setMenu(false)}>{label}</a>)}<a className="nav-cta" href="#contact">Request an estimate <ArrowUpRight size={16}/></a><a className="nav-phone" href="tel:+61491570156" aria-label="Call Airduct on 0491 570 156">0491 570 156</a></nav><a className="mobile-call" href="tel:+61491570156" aria-label="Call Airduct on 0491 570 156">Call <span>0491 570 156</span></a><a className="mobile-estimate" href="#contact">Estimate <ArrowUpRight size={16}/></a><button className="menu-button" onClick={()=>setMenu(!menu)} aria-label={menu?"Close navigation":"Open navigation"}>{menu?<X/>:<Menu/>}</button></header>
   <main id="home">
