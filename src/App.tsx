@@ -15,13 +15,13 @@ const concepts = {
 type Key = keyof typeof concepts;
 const processImages: Record<Key, [string, string, string]> = {
  "clear-living": [
-  "/air-duct-cleaning/clear-living/images/process-1.jpg",
-  "/air-duct-cleaning/clear-living/images/process-2.jpg",
-  "/air-duct-cleaning/clear-living/images/process-3.jpg"
+  `${import.meta.env.BASE_URL}images/process-1.jpg`,
+  `${import.meta.env.BASE_URL}images/process-2.jpg`,
+  `${import.meta.env.BASE_URL}images/process-3.jpg`
  ]
 };
 const visualAssets: Record<Key,{about:string;matter:string;why:string;services:[string,string,string]}> = {
- "clear-living":{about:"https://dryerventcleaninglamarque.com/assets/img/air-duct-clean-call.jpg",matter:"https://cleancarpetspring.com/img/air-duct-before-%26-after-cleaning.webp",why:"/air-duct-cleaning/clear-living/images/why-inspection.jpg",services:["https://cdn.marblism.com/MiScO0tj0Nt.webp","https://images.squarespace-cdn.com/content/v1/5efc0e891bb71f2bb32c3ada/1646262722877-HIGEONEPWY9OB4X5GO8C/Screen%2BShot%2B2022-03-02%2Bat%2B3.00.13%2BPM.png","https://cdn.prod.website-files.com/678a6ffbc04cfe4f45f44ae6/680b14a6b77eb7c331b22a51_Duct%20Cleaning1.webp"]}
+ "clear-living":{about:"https://dryerventcleaninglamarque.com/assets/img/air-duct-clean-call.jpg",matter:"https://cleancarpetspring.com/img/air-duct-before-%26-after-cleaning.webp",why:`${import.meta.env.BASE_URL}images/why-inspection.jpg`,services:["https://cdn.marblism.com/MiScO0tj0Nt.webp","https://images.squarespace-cdn.com/content/v1/5efc0e891bb71f2bb32c3ada/1646262722877-HIGEONEPWY9OB4X5GO8C/Screen%2BShot%2B2022-03-02%2Bat%2B3.00.13%2BPM.png","https://cdn.prod.website-files.com/678a6ffbc04cfe4f45f44ae6/680b14a6b77eb7c331b22a51_Duct%20Cleaning1.webp"]}
 };
 const comparisonImage = "https://powerhvacgta.ca/cdn/shop/files/air-duct-cleaning-process-by-power-hvac-services-inc.webp?v=1775443950&width=1500";
 const services = [
